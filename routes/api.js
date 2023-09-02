@@ -8,6 +8,27 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 let clearTeamInterval = null;
 let teamArr = null;
+const SteinStore = require("stein-js-client");
+const store = new SteinStore(
+  "https://api.steinhq.com/v1/storages/64f307aad27cdd09f013520b"
+);
+
+// ----------------------Get Team Member---------------------//
+router.get("/teamMember/:teamId", async (req, res) => {
+  if (!req.params.teamId) {
+    res.send("Please provide teamId");
+  } else if (req.params.teamId < 1 || req.params.teamId > 10) {
+    res.send("Invalid Team ID");
+  } else {
+    store.read("Sheet1").then((data) => {
+      let dataToReturn = data.find(
+        (team) => team["Team ID"] === req.params.teamId
+      );
+      console.log(dataToReturn);
+      res.json(dataToReturn);
+    });
+  }
+});
 
 // ------------------------Reset Team List ------------------//
 function resetTeamList() {
