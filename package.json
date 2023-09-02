@@ -14,7 +14,9 @@
     "cors": "^2.8.5",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "prisma": "^5.2.0",
     "stein-js-client": "^0.0.2"
+  },
+  "devDependencies": {
+    "prisma": "^5.2.0"
   }
 }
