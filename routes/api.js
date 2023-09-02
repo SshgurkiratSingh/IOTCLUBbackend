@@ -31,14 +31,14 @@ router.get("/config", async (req, res) => {
 router.get("/getDashboardData", async (req, res) => {
   const jsonData = await fs.readFile(customisationFile, "utf8");
   const fileData = JSON.parse(jsonData);
+
   if (!teamArr) {
     const jsonData = await fs.readFile(customisationFile, "utf8");
     const fileData = JSON.parse(jsonData);
     teamArr = fileData["dashboard"].teamToDisplayonDash;
-    // resetTeamList();
   }
 
-  const teamDataPromises = teamArr.map(async (teamId) => {
+  const teamDataPromises = teamArr.map(async (teamId, index) => {
     const teamData = await prisma.SensorLog.findFirst({
       where: {
         teamId: teamId,
@@ -47,7 +47,7 @@ router.get("/getDashboardData", async (req, res) => {
         date: "desc", // Sort by timestamp in descending order
       },
     });
-    return { teamId, teamData };
+    return { teamId, teamData, index };
   });
 
   // Wait for all promises to resolve
@@ -55,10 +55,10 @@ router.get("/getDashboardData", async (req, res) => {
 
   // Convert the array into a final combined data object
   const finalCombinedData = teamDataArray.reduce(
-    (result, { teamId, teamData }) => {
-      result[`sensor${teamId}`] = {
+    (result, { teamId, teamData, index }) => {
+      result[`sensor${index + 1}`] = {
         teamData,
-        maxValue: fileData["maxValue"][teamId - 1],
+        maxValue: fileData["maxValue"][index],
       };
       return result;
     },
@@ -67,6 +67,7 @@ router.get("/getDashboardData", async (req, res) => {
 
   res.json(finalCombinedData);
 });
+
 // --------------------------Get Specific Team Data--------------------------//
 router.get("/getDashboardData/:teamId", async (req, res) => {
   const teamId = parseInt(req.params.teamId);
@@ -104,5 +105,43 @@ router.get("/getSensorData", async (req, res) => {
 // -------------------------Get Online Status---------------------//
 router.get("/getOnlineStatus", async (req, res) => {
   res.json({ online: true });
+});
+// -------------------------Get Team Dashboard Data---------------------//
+router.get("/getTeamDashboardData/:teamId", async (req, res) => {
+  const teamId = parseInt(req.params.teamId);
+  if (teamId > 10) {
+    res.json({ status: "fail", problem: "teamId is too high" });
+  }
+  const teamData = await prisma.SensorLog.findMany({
+    where: {
+      teamId: teamId,
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+  res.json(teamData);
+});
+// -----------------------Get Team Dashboard latest Data with maxValue---------------//
+router.get("/getSensorDataByTeamid/:teamId", async (req, res) => {
+  const teamId = parseInt(req.params.teamId);
+  const jsonData = await fs.readFile(customisationFile, "utf8");
+  const fileData = JSON.parse(jsonData);
+  if (teamId > 10) {
+    res.json({ status: "fail", problem: "teamId is too high" });
+  }
+  const teamData = await prisma.SensorLog.findFirst({
+    where: {
+      teamId: teamId,
+    },
+    orderBy: {
+      date: "desc",
+    },
+  });
+  const finalRes = {
+    teamData,
+    maxValue: fileData["maxValue"][teamId - 1],
+  };
+  res.json(finalRes);
 });
 module.exports = router;
