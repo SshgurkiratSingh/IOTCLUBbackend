@@ -73,7 +73,8 @@ router.post("/updateSubtitle", async (req, res) => {
 // ----------------------Sensor Log-----------------------//
 router.post("/sensor", async (req, res) => {
   const dataRes = req.body;
-
+  console.log(`Clear Copy, updateReq received from ${req.ip}`);
+  console.log(dataRes);
   if (dataRes.teamId > 10) {
     res.json({ status: "fail", problem: "teamId is too high" });
   } else if (dataRes.teamId < 1) {
