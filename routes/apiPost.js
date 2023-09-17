@@ -73,7 +73,8 @@ router.post("/updateSubtitle", async (req, res) => {
 // ----------------------Sensor Log-----------------------//
 router.post("/sensor", async (req, res) => {
   const dataRes = req.body;
-
+  console.log(`Clear Copy, updateReq received from ${req.ip}`);
+  console.log(dataRes);
   if (dataRes.teamId > 10) {
     res.json({ status: "fail", problem: "teamId is too high" });
   } else if (dataRes.teamId < 1) {
@@ -95,9 +96,9 @@ router.post("/sensor", async (req, res) => {
             teamId: teamId,
             projectTitle: dataRes.projectTitle || "test",
             sensor1Name: dataRes.sensor1Name,
-            sensor1Value: dataRes.sensor1Value,
+            sensor1Value: String(dataRes.sensor1Value),
             sensor2Name: dataRes.sensor2Name,
-            sensor2Value: dataRes.sensor2Value,
+            sensor2Value: String(dataRes.sensor2Value),
           },
         });
       } else {
@@ -106,7 +107,7 @@ router.post("/sensor", async (req, res) => {
             teamId: teamId,
             projectTitle: dataRes.projectTitle || "test",
             sensor1Name: dataRes.sensor1Name,
-            sensor1Value: dataRes.sensor1Value,
+            sensor1Value: parseInt(dataRes.sensor1Value),
           },
         });
       }

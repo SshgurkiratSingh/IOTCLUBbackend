@@ -92,6 +92,8 @@ router.get("/getDashboardData", async (req, res) => {
 // --------------------------Get Specific Team Data--------------------------//
 router.get("/getDashboardData/:teamId", async (req, res) => {
   const teamId = parseInt(req.params.teamId);
+  const { page, limit } = req.query;
+  console.log(req.params);
   const teamData = await prisma.SensorLog.findMany({
     where: {
       teamId: teamId,
@@ -100,7 +102,17 @@ router.get("/getDashboardData/:teamId", async (req, res) => {
       date: "desc",
     },
   });
-  res.json(teamData);
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = page * limit;
+  const totalPages = Math.ceil(teamData.length / limit);
+
+  const paginatedData = teamData.slice(startIndex, endIndex);
+
+  res.json({
+    data: paginatedData,
+    totalPages: totalPages,
+  });
 });
 
 // -------------------- Get Specific Team Data with Sensor Name ------------------//
