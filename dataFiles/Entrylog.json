@@ -1,0 +1,21 @@
+[
+  {
+    "UID": "85d dd 55",
+    "timestamp": "2023-10-08T16:07:26.074Z",
+    "description": "Entry was Denied because of an unknown card",
+    "status": "unknown"
+  },
+  {
+    "UID": "C3 AA 0e 31",
+    "timestamp": "2023-10-08T16:08:23.822Z",
+    "description": "Attendence Marked Successfully",
+    "status": "Approved",
+    "userName": "Gurkirat Singh"
+  },
+  {
+    "UID": "C3AA0e3\n",
+    "timestamp": "2023-10-08T16:09:07.028Z",
+    "description": "Entry was Denied because of an unknown card",
+    "status": "unknown"
+  }
+]

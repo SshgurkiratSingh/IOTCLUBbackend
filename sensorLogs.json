@@ -1,0 +1,79 @@
+[
+  {
+    "id": "37565ae8-0f53-46cc-9947-50d1cf0cb8d6",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": 22,
+    "sensor2Name": null,
+    "sensor2Value": null,
+    "date": "2023-10-08T15:36:50.636Z",
+    "remarks": null
+  },
+  {
+    "id": "d9400823-ab66-46be-a17a-c1e6c420db4d",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "22",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "80",
+    "date": "2023-10-08T15:41:03.989Z",
+    "remarks": null
+  },
+  {
+    "id": "4f36f5d6-1c96-46ce-a8f8-3e8a8f441377",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "22",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "80",
+    "date": "2023-10-08T15:41:25.249Z",
+    "remarks": null
+  },
+  {
+    "id": "5e579d32-0471-4a45-8665-a8f0ef2cba77",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "55",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "80",
+    "date": "2023-10-08T15:41:32.847Z",
+    "remarks": null
+  },
+  {
+    "id": "0e9a076e-853a-44b4-b363-d2ab5a96f193",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "55",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "90",
+    "date": "2023-10-08T15:41:37.946Z",
+    "remarks": null
+  },
+  {
+    "id": "fd2e2466-bd47-4e27-aea6-696e204fab86",
+    "teamId": 2,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "55",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "90",
+    "date": "2023-10-08T15:44:02.499Z",
+    "remarks": null
+  },
+  {
+    "id": "3af2e652-de85-47af-8f7f-7becf82b8c89",
+    "teamId": 1,
+    "projectTitle": "test",
+    "sensor1Name": "DHT",
+    "sensor1Value": "20",
+    "sensor2Name": "Humidity",
+    "sensor2Value": "90",
+    "date": "2023-10-08T15:46:42.183Z",
+    "remarks": null
+  }
+]

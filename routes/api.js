@@ -4,11 +4,13 @@ router.use(express.json());
 router.use(express.urlencoded({ extended: false }));
 const customisationFile = "customisation.json";
 const fs = require("fs").promises;
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// const { PrismaClient } = require("@prisma/client");
+// const prisma = new PrismaClient();
 let clearTeamInterval = null;
 let teamArr = null;
 const SteinStore = require("stein-js-client");
+const { SensorLog } = require("../Database");
+const EntryCache = require("../CustomModule/cacheManager");
 const store = new SteinStore(
   "https://api.steinhq.com/v1/storages/64f307aad27cdd09f013520b"
 );
@@ -60,7 +62,7 @@ router.get("/getDashboardData", async (req, res) => {
   }
 
   const teamDataPromises = teamArr.map(async (teamId, index) => {
-    const teamData = await prisma.SensorLog.findFirst({
+    const teamData = await SensorLog.findFirst({
       where: {
         teamId: teamId,
       },
@@ -94,7 +96,7 @@ router.get("/getDashboardData/:teamId", async (req, res) => {
   const teamId = parseInt(req.params.teamId);
   const { page, limit } = req.query;
   console.log(req.params);
-  const teamData = await prisma.SensorLog.findMany({
+  const teamData = await SensorLog.findMany({
     where: {
       teamId: teamId,
     },
@@ -119,7 +121,7 @@ router.get("/getDashboardData/:teamId", async (req, res) => {
 router.get("/getDashboardData/:teamId/:sensorName", async (req, res) => {
   const teamId = parseInt(req.params.teamId);
   const sensorName = req.params.sensorName;
-  const teamData = await prisma.SensorLog.findMany({
+  const teamData = await SensorLog.findMany({
     where: {
       teamId: teamId,
       sensor1Name: sensorName,
@@ -128,6 +130,7 @@ router.get("/getDashboardData/:teamId/:sensorName", async (req, res) => {
       date: "desc",
     },
   });
+
   res.json(teamData);
 });
 // --------------------------Get Sensor Data-----------------------//
@@ -145,7 +148,7 @@ router.get("/getTeamDashboardData/:teamId", async (req, res) => {
   if (teamId > 10) {
     res.json({ status: "fail", problem: "teamId is too high" });
   }
-  const teamData = await prisma.SensorLog.findMany({
+  const teamData = await SensorLog.findMany({
     where: {
       teamId: teamId,
     },
@@ -153,6 +156,7 @@ router.get("/getTeamDashboardData/:teamId", async (req, res) => {
       date: "desc",
     },
   });
+
   res.json(teamData);
 });
 // -----------------------Get Team Dashboard latest Data with maxValue---------------//
@@ -163,7 +167,14 @@ router.get("/getSensorDataByTeamid/:teamId", async (req, res) => {
   if (teamId > 10) {
     res.json({ status: "fail", problem: "teamId is too high" });
   }
-  const teamData = await prisma.SensorLog.findFirst({
+  // const teamData = await prisma.SensorLog.findFirst({
+  //   where: {
+  //     teamId: teamId,
+  //   },
+  //   orderBy: {
+  //     date: "desc",
+  //   },
+  const teamData = await SensorLog.findFirst({
     where: {
       teamId: teamId,
     },
@@ -171,10 +182,17 @@ router.get("/getSensorDataByTeamid/:teamId", async (req, res) => {
       date: "desc",
     },
   });
+  // console.log(teamData);
   const finalRes = {
     teamData,
     maxValue: fileData["maxValue"][teamId - 1],
   };
   res.json(finalRes);
+});
+//  -------------------------Get Entry Logs---------------//
+router.get("/getEntryLogs", async (req, res) => {
+  const d = await EntryCache.getCache("entryLog");
+  const dataCopy = [...d["data"]];
+  res.json(dataCopy);
 });
 module.exports = router;

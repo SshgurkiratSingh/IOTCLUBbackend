@@ -3,8 +3,10 @@ const router = express.Router();
 const customisationFile = "customisation.json";
 router.use(express.json());
 const fs = require("fs").promises;
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+// const { PrismaClient } = require("@prisma/client");
+const { SensorLog } = require("../Database");
+const EntryCache = require("../CustomModule/cacheManager");
+// const prisma = new PrismaClient();
 // const axios = require("axios");
 router.use(express.urlencoded({ extended: false }));
 const auth = "1234a";
@@ -75,13 +77,11 @@ router.post("/sensor", async (req, res) => {
   const dataRes = req.body;
   console.log(`Clear Copy, updateReq received from ${req.ip}`);
   console.log(dataRes);
-  if (dataRes.teamId > 10) {
+  if (dataRes.teamId > 10 || !dataRes.teamId) {
     res.json({ status: "fail", problem: "teamId is too high" });
   } else if (dataRes.teamId < 1) {
-    // Fixed the condition here
     res.json({ status: "fail", problem: "teamId is too low" });
   } else if (!dataRes.sensor1Name || !dataRes.sensor1Value) {
-    // Combined the conditions here
     res.json({
       status: "fail",
       problem: "sensor1Name or sensor1Value missing",
@@ -91,24 +91,20 @@ router.post("/sensor", async (req, res) => {
       let data;
       teamId = parseInt(dataRes.teamId);
       if (dataRes.sensor2Name && dataRes.sensor2Value) {
-        data = await prisma.SensorLog.create({
-          data: {
-            teamId: teamId,
-            projectTitle: dataRes.projectTitle || "test",
-            sensor1Name: dataRes.sensor1Name,
-            sensor1Value: String(dataRes.sensor1Value),
-            sensor2Name: dataRes.sensor2Name,
-            sensor2Value: String(dataRes.sensor2Value),
-          },
+        data = await SensorLog.create({
+          teamId: teamId,
+          projectTitle: dataRes.projectTitle || "test",
+          sensor1Name: dataRes.sensor1Name,
+          sensor1Value: String(dataRes.sensor1Value),
+          sensor2Name: dataRes.sensor2Name,
+          sensor2Value: String(dataRes.sensor2Value),
         });
       } else {
-        data = await prisma.SensorLog.create({
-          data: {
-            teamId: teamId,
-            projectTitle: dataRes.projectTitle || "test",
-            sensor1Name: dataRes.sensor1Name,
-            sensor1Value: parseInt(dataRes.sensor1Value),
-          },
+        data = await SensorLog.create({
+          teamId: teamId,
+          projectTitle: dataRes.projectTitle || "test",
+          sensor1Name: dataRes.sensor1Name,
+          sensor1Value: parseInt(dataRes.sensor1Value),
         });
       }
 
@@ -150,7 +146,165 @@ router.post("/setMaxValue", async (req, res) => {
   }
   res.json({ status: "success" });
 });
+// -----------------------Validate a User-----------------------//
+router.post("/validateUser", async (req, res) => {
+  try {
+    const fileData = await fs.readFile("dataFiles/RFID.json", "utf-8");
+    const data = JSON.parse(fileData);
+    console.log(req.body);
 
-// ----------------------Create Project-----------------------//
+    // Check if UID exists in the request body
+    if (!req.body.UID) {
+      return res.json({
+        status: "error",
+        description: "No UID provided",
+        code: 400,
+      });
+    }
+
+    const { UID } = req.body;
+
+    // Check if UID exists in the tags array (case-insensitive)
+    const user = data.tags.find(
+      (tag) =>
+        tag.UID.toLowerCase().split(" ").join("") ===
+        UID.toLowerCase().split(" ").join("")
+    );
+
+    const logFileData = await fs.readFile("dataFiles/Entrylog.json", "utf-8");
+    const entryLog = JSON.parse(logFileData);
+    const timestamp = new Date().toISOString();
+
+    if (user) {
+      if (user.userAllowed == true) {
+        entryLog.push({
+          UID: user.UID,
+          timestamp,
+          description: "Attendence Marked Successfully",
+          status: "Approved",
+          userName: user.userName,
+        });
+
+        await fs.writeFile(
+          "dataFiles/Entrylog.json",
+          JSON.stringify(entryLog, null, 2)
+        );
+        await EntryCache.updateCache("entryLog");
+
+        return res.json({
+          permissionToUnlock: true,
+          isValid: true,
+          ...user,
+          timestamp,
+          code: 1,
+        });
+      } else {
+        // Handle entry denial logic
+        entryLog.push({
+          UID: user.UID,
+          timestamp,
+
+          description:
+            "Attendance was Denied because of permissions not granted to user",
+          status: "denied",
+          userName: user.userName,
+        });
+
+        await fs.writeFile(
+          "dataFiles/Entrylog.json",
+          JSON.stringify(entryLog, null, 2)
+        );
+        await EntryCache.updateCache("entryLog");
+        return res.json({
+          permissionToUnlock: false,
+          isValid: true,
+
+          ...user,
+          timestamp,
+          code: 2, // Status code for entry denied
+        });
+      }
+    } else {
+      // Handle unknown card logic
+      entryLog.push({
+        UID: UID,
+
+        timestamp,
+        description: "Attendance was Denied because of an unknown card",
+        status: "unknown",
+      });
+
+      await fs.writeFile(
+        "dataFiles/Entrylog.json",
+        JSON.stringify(entryLog, null, 2)
+      );
+      await EntryCache.updateCache("entryLog");
+
+      return res.json({
+        isValid: false,
+
+        timestamp,
+        code: 3, // Status code for unknown card
+      });
+    }
+  } catch (error) {
+    console.error("Error reading or parsing JSON file:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// ----------------------Create a User-----------------------//
+router.post("/addUser", async (req, res) => {
+  try {
+    // Validate user input
+    const {
+      UID,
+      userType,
+      userName,
+      email,
+      userAllowed,
+      userDescription,
+      userRollNo,
+    } = req.body;
+
+    if (!UID || !userType || !userName || !email) {
+      return res.status(400).json({ error: "Invalid user data" });
+    }
+
+    const fileData = await fs.readFile("dataFiles/RFID.json", "utf-8");
+    const data = JSON.parse(fileData);
+
+    // Check if userUID exists in the tags array
+    const user = data.tags.find((tag) => tag.UID === UID);
+
+    if (user) {
+      return res.status(409).json({
+        error: "User already exists",
+        user: user,
+      });
+    } else {
+      data.tags.push({
+        UID: UID,
+        userName: userName,
+        userType: userType,
+        userDescription: userDescription,
+        userAllowed: userAllowed,
+        email: email,
+        userRollNo: userRollNo,
+      });
+
+      // Write updated data back to the file
+      await fs.writeFile("dataFiles/RFID.json", JSON.stringify(data));
+
+      return res.status(201).json({
+        message: "User added successfully",
+        user: data.tags.find((tag) => tag.UID === UID),
+      });
+    }
+  } catch (error) {
+    console.error("Error reading or parsing JSON file:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+});
 
 module.exports = router;
